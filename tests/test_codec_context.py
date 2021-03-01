@@ -43,6 +43,51 @@ class TestCodecContext(TestCase):
         ctx = Codec('png', 'w').create()
         self.assertEqual(ctx.skip_frame.name, 'DEFAULT')
 
+    def test_codec_tag(self):
+        ctx = Codec('mpeg4', 'w').create()
+        self.assertEqual(ctx.codec_tag, '\x00\x00\x00\x00')
+        ctx.codec_tag = 'xvid'
+        self.assertEqual(ctx.codec_tag, 'xvid')
+
+        # wrong length
+        with self.assertRaises(ValueError) as cm:
+            ctx.codec_tag = 'bob'
+        self.assertEqual(str(cm.exception), 'Codec tag should be a 4 character string.')
+
+        # wrong type
+        with self.assertRaises(ValueError) as cm:
+            ctx.codec_tag = 123
+        self.assertEqual(str(cm.exception), 'Codec tag should be a 4 character string.')
+
+        with av.open(fate_suite('h264/interlaced_crop.mp4')) as container:
+            self.assertEqual(container.streams[0].codec_tag, 'avc1')
+
+    def test_decoder_extradata(self):
+        ctx = av.codec.Codec('h264', 'r').create()
+        self.assertEqual(ctx.extradata, None)
+        self.assertEqual(ctx.extradata_size, 0)
+
+        ctx.extradata = b"123"
+        self.assertEqual(ctx.extradata, b"123")
+        self.assertEqual(ctx.extradata_size, 3)
+
+        ctx.extradata = b"54321"
+        self.assertEqual(ctx.extradata, b"54321")
+        self.assertEqual(ctx.extradata_size, 5)
+
+        ctx.extradata = None
+        self.assertEqual(ctx.extradata, None)
+        self.assertEqual(ctx.extradata_size, 0)
+
+    def test_encoder_extradata(self):
+        ctx = av.codec.Codec('h264', 'w').create()
+        self.assertEqual(ctx.extradata, None)
+        self.assertEqual(ctx.extradata_size, 0)
+
+        with self.assertRaises(ValueError) as cm:
+            ctx.extradata = b"123"
+        self.assertEqual(str(cm.exception), "Can only set extradata for decoders.")
+
     def test_parse(self):
 
         # This one parses into a single packet.

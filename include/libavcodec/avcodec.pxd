@@ -7,6 +7,7 @@ cdef extern from "libavcodec/avcodec.pyav.h" nogil:
     cdef char* avcodec_configuration()
     cdef char* avcodec_license()
 
+    cdef size_t AV_INPUT_BUFFER_PADDING_SIZE
     cdef int64_t AV_NOPTS_VALUE
 
     # AVCodecDescriptor.props
