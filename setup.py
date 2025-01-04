@@ -5,7 +5,6 @@ from distutils.command.clean import clean, log
 from distutils.core import Command
 from distutils.dir_util import remove_tree
 from distutils.errors import DistutilsExecError
-from distutils.msvccompiler import MSVCCompiler
 from setuptools import setup, find_packages, Extension, Distribution
 from setuptools.command.build_ext import build_ext
 from subprocess import Popen, PIPE
@@ -25,6 +24,10 @@ if PY3:
 else:
     from pipes import quote as shell_quote
 
+try:
+    from distutils.msvccompiler import MSVCCompiler
+except ImportError:
+    MSVCCompiler = None
 try:
     # This depends on _winreg, which is not availible on not-Windows.
     from distutils.msvc9compiler import MSVCCompiler as MSVC9Compiler
