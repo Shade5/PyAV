@@ -66,10 +66,11 @@ _cflag_parser.add_argument('-L', dest='library_dirs', action='append')
 _cflag_parser.add_argument('-l', dest='libraries', action='append')
 _cflag_parser.add_argument('-D', dest='define_macros', action='append')
 _cflag_parser.add_argument('-R', dest='runtime_library_dirs', action='append')
+_cflag_parser.add_argument('-pthread', dest='use_pthread', action='store_true')
 def parse_cflags(raw_cflags):
     raw_args = shlex.split(raw_cflags.strip())
     args, unknown = _cflag_parser.parse_known_args(raw_args)
-    config = {k: v or [] for k, v in args.__dict__.items()}
+    config = {k: v or [] for k, v in args.__dict__.items() if k != 'use_pthread'}
     for i, x in enumerate(config['define_macros']):
         parts = x.split('=', 1)
         value = x[1] or None if len(x) == 2 else None
@@ -82,8 +83,9 @@ def get_library_config(name):
     This requires ``pkg-config``.
 
     """
+    cmd = ['pkg-config', '--cflags', '--libs', name]
     try:
-        proc = Popen(['pkg-config', '--cflags', '--libs', name], stdout=PIPE, stderr=PIPE)
+        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
     except OSError:
         print('pkg-config is required for building PyAV')
         exit(1)
@@ -95,6 +97,7 @@ def get_library_config(name):
     known, unknown = parse_cflags(raw_cflags.decode('utf8'))
     if unknown:
         print("pkg-config returned flags we don't understand: {}".format(unknown))
+        print(*cmd)
         exit(1)
 
     return known
